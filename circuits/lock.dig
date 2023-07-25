@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>2</version>
+  <attributes/>
+  <visualElements>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>lock</string>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>Clk,R,X3,X2,X1</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.std_logic_1164.all;
+
+entity lock is
+    port(
+        Clk, R     : in  std_logic;
+        X3, X2, X1 : in  std_logic;
+        L, O       : out std_logic
+    );
+end lock;
+
+architecture Behavioral of lock is
+    type state_type is (S0, S1, S1_f, S2, S2_f, S3);  -- Deklarera situationer
+    signal internal_state : state_type := S0; -- Börja med första situation S0
+    signal internal_O : std_logic := &apos;0&apos;; -- Lysdioderna är 0 från början
+    signal internal_L : std_logic := &apos;0&apos;;
+
+begin
+    process(Clk)
+    begin
+        if rising_edge(Clk) then
+            if R = &apos;1&apos; then  -- Reset är hög för att återvända till första situation S0
+                internal_state &lt;= S0;
+                internal_O &lt;= &apos;0&apos;;
+                internal_L &lt;= &apos;0&apos;;
+            else
+                case internal_state is
+                    when S0 =&gt;
+                        if X3 = &apos;1&apos; and X2 = &apos;0&apos; and X1 = &apos;0&apos; then
+                            internal_state &lt;= S1; -- Fortsätt till rätt situation S1 om första inmätning är rätt
+                        else
+                            internal_state &lt;= S1_f; -- Fortsätt till fel situation S1_f om första inmätning är fel
+                        end if;
+                    when S1 =&gt;
+                        if X3 = &apos;0&apos; and X2 = &apos;1&apos; and X1 = &apos;0&apos; then
+                            internal_state &lt;= S2; -- Samma sak
+                        else
+                            internal_state &lt;= S2_f;
+                        end if;
+                    when S2 =&gt;
+                        if X3 = &apos;0&apos; and X2 = &apos;0&apos; and X1 = &apos;1&apos; then -- Låst om tredje inmätning är fel
+                            internal_state &lt;= S3; 
+                            internal_O &lt;= &apos;1&apos;;
+                        else
+                            internal_L &lt;= &apos;1&apos;; -- Oavsett om första två var rätt
+                        end if;
+
+                    when S1_f =&gt; -- Felaktiga situationer
+                        if X3 = &apos;0&apos; then
+                            internal_state &lt;= S2_f;
+                        else
+                            internal_state &lt;= S2_f;
+                        end if;
+                    when S2_f =&gt;
+                        if X3 = &apos;0&apos; then
+                            internal_L &lt;= &apos;1&apos;;
+                            internal_state &lt;= S2_f;
+                        else
+                            internal_L &lt;= &apos;1&apos;;
+                            internal_state &lt;= S2_f;
+                        end if;
+
+                    when others =&gt; -- Skydd mot cracking, lås om det händer oförväntade inmätningar
+                        internal_O &lt;= &apos;0&apos;;
+                        internal_L &lt;= &apos;1&apos;;
+                end case;
+            end if;
+        end if;
+    end process;
+
+    O &lt;= internal_O;
+    L &lt;= internal_L;
+
+end Behavioral;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>L,O</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>6</int>
+        </entry>
+      </elementAttributes>
+      <pos x="740" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>rotation</string>
+          <rotation rotation="1"/>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>X3</string>
+        </entry>
+      </elementAttributes>
+      <pos x="640" y="400"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>rotation</string>
+          <rotation rotation="1"/>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>X2</string>
+        </entry>
+      </elementAttributes>
+      <pos x="680" y="400"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>rotation</string>
+          <rotation rotation="1"/>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>X1</string>
+        </entry>
+      </elementAttributes>
+      <pos x="720" y="400"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Reset</string>
+        </entry>
+      </elementAttributes>
+      <pos x="700" y="220"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Clock</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Clk</string>
+        </entry>
+      </elementAttributes>
+      <pos x="700" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Locked</string>
+        </entry>
+      </elementAttributes>
+      <pos x="900" y="260"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Open</string>
+        </entry>
+      </elementAttributes>
+      <pos x="900" y="320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Seven-Seg-Hex</elementName>
+      <elementAttributes/>
+      <pos x="500" y="140"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Splitter</elementName>
+      <elementAttributes>
+        <entry>
+          <string>mirror</string>
+          <boolean>true</boolean>
+        </entry>
+        <entry>
+          <string>rotation</string>
+          <rotation rotation="1"/>
+        </entry>
+        <entry>
+          <string>Input Splitting</string>
+          <string>1,1,1,1</string>
+        </entry>
+        <entry>
+          <string>Output Splitting</string>
+          <string>4</string>
+        </entry>
+      </elementAttributes>
+      <pos x="540" y="320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Ground</elementName>
+      <elementAttributes>
+        <entry>
+          <string>rotation</string>
+          <rotation rotation="1"/>
+        </entry>
+      </elementAttributes>
+      <pos x="580" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Const</elementName>
+      <elementAttributes>
+        <entry>
+          <string>rotation</string>
+          <rotation rotation="1"/>
+        </entry>
+        <entry>
+          <string>Value</string>
+          <long>0</long>
+        </entry>
+      </elementAttributes>
+      <pos x="480" y="340"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Text</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Description</string>
+          <string>Password is: 4 2 1</string>
+        </entry>
+      </elementAttributes>
+      <pos x="820" y="420"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="640" y="320"/>
+      <p2 x="740" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="880" y="320"/>
+      <p2 x="900" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="340"/>
+      <p2 x="740" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="500" y="340"/>
+      <p2 x="640" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="880" y="260"/>
+      <p2 x="900" y="260"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="360"/>
+      <p2 x="740" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="360"/>
+      <p2 x="680" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="860" y="280"/>
+      <p2 x="880" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="700" y="280"/>
+      <p2 x="740" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="560" y="280"/>
+      <p2 x="580" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="860" y="300"/>
+      <p2 x="880" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="300"/>
+      <p2 x="740" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="700" y="220"/>
+      <p2 x="720" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="540" y="380"/>
+      <p2 x="720" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="360"/>
+      <p2 x="720" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="220"/>
+      <p2 x="720" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="380"/>
+      <p2 x="720" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="880" y="260"/>
+      <p2 x="880" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="880" y="300"/>
+      <p2 x="880" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="480" y="320"/>
+      <p2 x="480" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="640" y="320"/>
+      <p2 x="640" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="640" y="340"/>
+      <p2 x="640" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="500" y="320"/>
+      <p2 x="500" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="340"/>
+      <p2 x="680" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="680" y="360"/>
+      <p2 x="680" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="320"/>
+      <p2 x="520" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="540" y="280"/>
+      <p2 x="540" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="540" y="320"/>
+      <p2 x="540" y="380"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>
