@@ -11,3 +11,4 @@ module JK_flipflop (input J, K, clk, reset, output reg Q);
             Q <= ~Q;
     end
 endmodule
+

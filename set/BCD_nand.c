@@ -23,3 +23,4 @@ bool u1(bool x1, bool x4, bool x2, bool x3) {
 bool BCD(bool x4, bool x2, bool x3) {
     return not(x4) || not(x2) && x4 && not(x3);
 }
+

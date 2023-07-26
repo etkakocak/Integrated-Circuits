@@ -18,3 +18,4 @@ module bcd_to_sevenseg (
         endcase
     end
 endmodule
+
